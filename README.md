@@ -32,9 +32,7 @@ Esta aplicação resolve isso oferecendo um formulário web simples onde o usuá
 
 O site está hospedado no GitHub Pages e pode ser acessado em:
 
-**`https://<seu-usuario>.github.io/<nome-do-repositorio>`**
-
-> Substitua `<seu-usuario>` e `<nome-do-repositorio>` pelos valores reais do seu repositório.
+**`https://antonio-justier.github.io/GERADOR-DE-RNC-/`**
 
 ## 🛠️ Tecnologias
 
@@ -62,7 +60,7 @@ Não há build nem instalação. Basta:
 
 1. Clonar o repositório:
    ```bash
-   git clone https://github.com/<seu-usuario>/<nome-do-repositorio>.git
+   git clone https://antonio-justier.github.io/GERADOR-DE-RNC-/
    ```
 2. Abrir o arquivo `index.html` em qualquer navegador moderno (Chrome, Edge, Firefox).
 
