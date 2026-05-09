@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador de RNC — Relatório de Não Conformidade</title>
+
+<!-- Bibliotecas externas para gerar o PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+  /* ===== Reset e base ===== */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --ink: #1f2330;
+    --ink-soft: #555a6b;
+    --line: #d9dde5;
+    --accent: #b91c1c;       /* vermelho El Dourado */
+    --accent-soft: #fef2f2;
+    --header-bg: #e9ebf0;    /* cinza dos cabeçalhos da tabela */
+    --ok: #15803d;
+  }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    padding: 24px 16px 80px;
+  }
+
+  /* ===== Cabeçalho da página ===== */
+  .page-header {
+    max-width: 1100px;
+    margin: 0 auto 24px;
+    padding: 20px 28px;
+    background: linear-gradient(135deg, #ffffff, #f8f9fb);
+    border-left: 5px solid var(--accent);
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  }
+  .page-header h1 {
+    font-size: 22px;
+    letter-spacing: 0.3px;
+    color: var(--ink);
+  }
+  .page-header p {
+    color: var(--ink-soft);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+
+  /* ===== Container do formulário ===== */
+  .form-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    overflow: hidden;
+  }
+
+  .section-title {
+    background: var(--header-bg);
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--ink);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .section-body {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .section-body.full { grid-template-columns: 1fr; }
+
+  .field { display: flex; flex-direction: column; }
+  .field.full { grid-column: 1 / -1; }
+  .field label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .field input,
+  .field select,
+  .field textarea {
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--ink);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field textarea { resize: vertical; min-height: 80px; }
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.12);
+  }
+
+  /* ===== Upload de imagens ===== */
+  .image-uploads {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .image-slot {
+    border: 2px dashed var(--line);
+    border-radius: 6px;
+    padding: 16px;
+    text-align: center;
+    background: #fafbfc;
+    transition: border-color .15s, background .15s;
+  }
+  .image-slot:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .image-slot label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+    cursor: pointer;
+  }
+  .image-slot input[type="file"] { display: none; }
+  .image-slot .pick-btn {
+    display: inline-block;
+    padding: 8px 18px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .image-slot .pick-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .image-slot .preview {
+    margin-top: 12px;
+    max-width: 100%;
+    max-height: 220px;
+    border-radius: 4px;
+    display: none;
+  }
+  .image-slot .preview.visible { display: inline-block; }
+
+  /* ===== Botões de ação ===== */
+  .actions {
+    max-width: 1100px;
+    margin: 24px auto 0;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: transform .1s, box-shadow .15s, background .15s;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 4px rgba(185,28,28,0.3);
+  }
+  .btn-primary:hover { background: #991b1b; box-shadow: 0 4px 8px rgba(185,28,28,0.4); }
+  .btn-primary:active { transform: translateY(1px); }
+  .btn-secondary {
+    background: #fff;
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ===== Toast de feedback ===== */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--ok);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: transform .25s;
+    z-index: 1000;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { background: #b91c1c; }
+
+  /* ===== Template do PDF (oculto) ===== */
+  /* Esta div é renderizada e capturada para gerar o PDF.
+     Mantém o layout idêntico ao Excel atual. */
+  #pdf-template {
+    position: absolute;
+    left: -10000px;
+    top: 0;
+    width: 1000px;
+    background: #fff;
+    font-family: Arial, sans-serif;
+    color: #000;
+    font-size: 12px;
+  }
+  #pdf-template table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #000;
+  }
+  #pdf-template td {
+    border: 1px solid #000;
+    padding: 6px 8px;
+    vertical-align: middle;
+  }
+  #pdf-template .label-cell {
+    background: #fff;
+    font-weight: bold;
+    width: 18%;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+  #pdf-template .header-cell {
+    background: #d9d9d9;
+    font-weight: bold;
+    text-align: center;
+    font-size: 13px;
+    padding: 10px;
+  }
+  #pdf-template .rnc-number {
+    background: #d9d9d9;
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    padding: 14px;
+  }
+  #pdf-template .logo-cell {
+    text-align: center;
+    padding: 14px;
+    width: 22%;
+  }
+  #pdf-template .logo-cell .logo-text {
+    color: #b91c1c;
+    font-weight: bold;
+    font-size: 22px;
+    letter-spacing: 1px;
+  }
+  #pdf-template .logo-cell .logo-sub {
+    color: #555;
+    font-size: 10px;
+    font-style: italic;
+    margin-top: 2px;
+  }
+  #pdf-template .image-cell {
+    text-align: center;
+    padding: 12px;
+    height: 280px;
+  }
+  #pdf-template .image-cell img {
+    max-width: 100%;
+    max-height: 260px;
+    object-fit: contain;
+  }
+  #pdf-template .desc-area {
+    height: 110px;
+    vertical-align: top;
+    padding: 8px;
+  }
+  #pdf-template .footer-cell {
+    background: #d9d9d9;
+    text-align: center;
+    font-size: 10px;
+    padding: 6px;
+  }
+
+  /* ===== Responsivo ===== */
+  @media (max-width: 700px) {
+    .section-body { grid-template-columns: 1fr; }
+    .image-uploads { grid-template-columns: 1fr; }
+    .page-header { padding: 16px; }
+    .page-header h1 { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <h1>Gerador de RNC</h1>
+  <p>Preencha os campos abaixo, anexe as imagens e clique em "Gerar PDF" para baixar o relatório.</p>
+</header>
+
+<form class="form-container" id="rncForm" onsubmit="return false;">
+
+  <!-- Identificação -->
+  <div class="section-title">Identificação</div>
+  <div class="section-body">
+    <div class="field">
+      <label for="numeroRnc">Nº da RNC</label>
+      <input type="text" id="numeroRnc" placeholder="Ex.: 02">
+    </div>
+    <div class="field">
+      <label for="setor">Setor solicitante</label>
+      <input type="text" id="setor" placeholder="Ex.: Anexo">
+    </div>
+    <div class="field">
+      <label for="produto">Produto</label>
+      <input type="text" id="produto" placeholder="Ex.: Queijo Mussarela">
+    </div>
+    <div class="field">
+      <label for="marca">Marca</label>
+      <input type="text" id="marca" placeholder="Ex.: Tirolês">
+    </div>
+    <div class="field">
+      <label for="dataFab">Data de fabricação</label>
+      <input type="date" id="dataFab">
+    </div>
+    <div class="field">
+      <label for="dataVal">Data de validade</label>
+      <input type="date" id="dataVal">
+    </div>
+    <div class="field">
+      <label for="quantidade">Quantidade</label>
+      <input type="text" id="quantidade" placeholder="Ex.: 1 pç">
+    </div>
+    <div class="field">
+      <label for="lote">Lote</label>
+      <input type="text" id="lote" placeholder="Ex.: 2.005.031">
+    </div>
+    <div class="field">
+      <label for="nf">NF</label>
+      <input type="text" id="nf" placeholder="Número da nota fiscal ou -">
+    </div>
+    <div class="field">
+      <label for="fornecedor">Fornecedor</label>
+      <input type="text" id="fornecedor" placeholder="Ex.: PMG">
+    </div>
+    <div class="field">
+      <label for="risco">Risco ao consumidor</label>
+      <select id="risco">
+        <option value="sim">Sim</option>
+        <option value="não">Não</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Ocorrência -->
+  <div class="section-title">Ocorrência</div>
+  <div class="section-body full">
+    <div class="field">
+      <label for="descricao">Descrição da ocorrência</label>
+      <textarea id="descricao" placeholder="Descreva o que foi observado..."></textarea>
+    </div>
+    <div class="field">
+      <label for="causa">Causa da não conformidade</label>
+      <textarea id="causa" placeholder="Ex.: Presença de mofo."></textarea>
+    </div>
+  </div>
+
+  <!-- Anexos -->
+  <div class="section-title">Anexos (imagens)</div>
+  <div class="section-body full">
+    <div class="image-uploads">
+      <div class="image-slot">
+        <label for="img1">Imagem 1</label>
+        <input type="file" id="img1" accept="image/*" onchange="handleImage(event, 'preview1')">
+        <button type="button" class="pick-btn" onclick="document.getElementById('img1').click()">Selecionar imagem</button>
+        <img class="preview" id="preview1" alt="Pré-visualização">
+      </div>
+      <div class="image-slot">
+        <label for="img2">Imagem 2</label>
+        <input type="file" id="img2" accept="image/*" onchange="handleImage(event, 'preview2')">
+        <button type="button" class="pick-btn" onclick="document.getElementById('img2').click()">Selecionar imagem</button>
+        <img class="preview" id="preview2" alt="Pré-visualização">
+      </div>
+    </div>
+  </div>
+
+  <!-- Responsável e ação -->
+  <div class="section-title">Responsável e ação corretiva</div>
+  <div class="section-body">
+    <div class="field">
+      <label for="responsavel">Responsável</label>
+      <input type="text" id="responsavel" placeholder="Ex.: Lucas Mota">
+    </div>
+    <div class="field">
+      <label for="dataResp">Data</label>
+      <input type="date" id="dataResp">
+    </div>
+    <div class="field">
+      <label for="prazo">Prazo de correção</label>
+      <input type="text" id="prazo" placeholder="Ex.: Imediato">
+    </div>
+    <div class="field full">
+      <label for="acao">Ação corretiva</label>
+      <textarea id="acao" placeholder="Ex.: Produto direcionado para CD para troca do produto."></textarea>
+    </div>
+  </div>
+
+</form>
+
+<div class="actions">
+  <button type="button" class="btn btn-secondary" onclick="limparFormulario()">Limpar</button>
+  <button type="button" class="btn btn-primary" onclick="gerarPDF()">Gerar PDF</button>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ============================================ -->
+<!-- TEMPLATE DO PDF — fica oculto na página -->
+<!-- ============================================ -->
+<div id="pdf-template">
+  <table>
+    <!-- Linha 1: logo, número, descrição (cabeçalho) -->
+    <tr>
+      <td class="logo-cell" rowspan="2">
+        <div class="logo-text">EL DOURADO</div>
+        <div class="logo-sub">by Sapore</div>
+      </td>
+      <td class="rnc-number" colspan="2">Nº DA RNC: <span id="p-numero"></span></td>
+      <td class="header-cell">DESCRIÇÃO DA OCORRÊNCIA:</td>
+    </tr>
+    <!-- A partir daqui: campos da esquerda + descrição (rowspan na direita) -->
+    <tr>
+      <td class="label-cell">Setor solicitante:</td>
+      <td colspan="2"><span id="p-setor"></span></td>
+      <td class="desc-area" rowspan="5"><span id="p-descricao"></span></td>
+    </tr>
+    <tr>
+      <td class="label-cell">Produto:</td>
+      <td colspan="3"><span id="p-produto"></span></td>
+    </tr>
+    <tr>
+      <td class="label-cell">Marca:</td>
+      <td colspan="3"><span id="p-marca"></span></td>
+    </tr>
+    <tr>
+      <td class="label-cell">Data de fabricação:</td>
+      <td colspan="3"><span id="p-dataFab"></span></td>
+    </tr>
+    <tr>
+      <td class="label-cell">Data de validade:</td>
+      <td colspan="3"><span id="p-dataVal"></span></td>
+    </tr>
+    <tr>
+      <td class="label-cell">Quantidade:</td>
+      <td colspan="3"><span id="p-quantidade"></span></td>
+      <td class="header-cell">CAUSA DA NÃO CONFORMIDADE</td>
+    </tr>
+    <tr>
+      <td class="label-cell">Lote:</td>
+      <td colspan="3"><span id="p-lote"></span></td>
+      <td class="desc-area" rowspan="4"><span id="p-causa"></span></td>
+    </tr>
+    <tr>
+      <td class="label-cell">NF:</td>
+      <td colspan="3"><span id="p-nf"></span></td>
+    </tr>
+    <tr>
+      <td class="label-cell">Fornecedor:</td>
+      <td colspan="3"><span id="p-fornecedor"></span></td>
+    </tr>
+    <tr>
+      <td class="label-cell">Risco ao consumidor:</td>
+      <td colspan="3"><span id="p-risco"></span></td>
+    </tr>
+    <!-- Anexos -->
+    <tr>
+      <td class="header-cell" colspan="5">ANEXOS:</td>
+    </tr>
+    <tr>
+      <td class="image-cell" colspan="2"><img id="p-img1" alt=""></td>
+      <td class="image-cell" colspan="3"><img id="p-img2" alt=""></td>
+    </tr>
+    <!-- Responsável e ação -->
+    <tr>
+      <td class="label-cell">Responsável:</td>
+      <td colspan="2"><span id="p-responsavel"></span></td>
+      <td class="header-cell">AÇÃO Corretiva</td>
+    </tr>
+    <tr>
+      <td class="label-cell">Data:</td>
+      <td colspan="2"><span id="p-dataResp"></span></td>
+      <td class="desc-area" rowspan="2"><span id="p-acao"></span></td>
+    </tr>
+    <tr>
+      <td class="label-cell">Prazo de correção:</td>
+      <td colspan="2"><span id="p-prazo"></span></td>
+    </tr>
+    <!-- Rodapé -->
+    <tr>
+      <td class="footer-cell" colspan="5">
+        Desenvolvido por: Cesar Augusto . &nbsp;&nbsp;&nbsp; Aprovado por: Jerlandia
+      </td>
+    </tr>
+  </table>
+</div>
+
+<script>
+/* ====================================================
+   FUNÇÕES DO FORMULÁRIO
+==================================================== */
+
+// Toast de feedback
+function mostrarToast(mensagem, tipo = 'sucesso') {
+  const toast = document.getElementById('toast');
+  toast.textContent = mensagem;
+  toast.className = 'toast show' + (tipo === 'erro' ? ' error' : '');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// Pré-visualização das imagens
+function handleImage(event, previewId) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById(previewId);
+    img.src = e.target.result;
+    img.classList.add('visible');
+  };
+  reader.readAsDataURL(file);
+}
+
+// Formatar data: yyyy-mm-dd → dd/mm/aa
+function formatarData(dataIso) {
+  if (!dataIso) return '';
+  const partes = dataIso.split('-');
+  if (partes.length !== 3) return dataIso;
+  return `${partes[2]}/${partes[1]}/${partes[0].slice(2)}`;
+}
+
+// Limpar formulário
+function limparFormulario() {
+  if (!confirm('Deseja limpar todos os campos?')) return;
+  document.getElementById('rncForm').reset();
+  document.querySelectorAll('.preview').forEach(img => {
+    img.src = '';
+    img.classList.remove('visible');
+  });
+  mostrarToast('Formulário limpo');
+}
+
+// Captura o valor de um campo
+function val(id) {
+  return document.getElementById(id).value.trim();
+}
+
+/* ====================================================
+   GERAÇÃO DO PDF
+==================================================== */
+async function gerarPDF() {
+  // Validação básica
+  if (!val('numeroRnc') || !val('produto')) {
+    mostrarToast('Preencha pelo menos o nº da RNC e o produto', 'erro');
+    return;
+  }
+
+  mostrarToast('Gerando PDF, aguarde...');
+
+  // 1) Preenche o template oculto com os dados do formulário
+  document.getElementById('p-numero').textContent     = val('numeroRnc');
+  document.getElementById('p-setor').textContent      = val('setor');
+  document.getElementById('p-produto').textContent    = val('produto');
+  document.getElementById('p-marca').textContent      = val('marca');
+  document.getElementById('p-dataFab').textContent    = formatarData(val('dataFab'));
+  document.getElementById('p-dataVal').textContent    = formatarData(val('dataVal'));
+  document.getElementById('p-quantidade').textContent = val('quantidade');
+  document.getElementById('p-lote').textContent       = val('lote');
+  document.getElementById('p-nf').textContent         = val('nf') || '-';
+  document.getElementById('p-fornecedor').textContent = val('fornecedor');
+  document.getElementById('p-risco').textContent      = val('risco');
+  document.getElementById('p-descricao').textContent  = val('descricao');
+  document.getElementById('p-causa').textContent      = val('causa');
+  document.getElementById('p-responsavel').textContent= val('responsavel');
+  document.getElementById('p-dataResp').textContent   = formatarData(val('dataResp'));
+  document.getElementById('p-prazo').textContent      = val('prazo');
+  document.getElementById('p-acao').textContent       = val('acao');
+
+  // Imagens (se houver)
+  const preview1 = document.getElementById('preview1');
+  const preview2 = document.getElementById('preview2');
+  document.getElementById('p-img1').src = preview1.classList.contains('visible') ? preview1.src : '';
+  document.getElementById('p-img2').src = preview2.classList.contains('visible') ? preview2.src : '';
+
+  // 2) Pequena espera para garantir que as imagens foram carregadas no DOM
+  await new Promise(r => setTimeout(r, 200));
+
+  try {
+    // 3) Captura o template como imagem
+    const template = document.getElementById('pdf-template');
+    const canvas = await html2canvas(template, {
+      scale: 2,            // qualidade alta
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    });
+
+    // 4) Cria o PDF (A4 paisagem, formato semelhante ao original)
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+    // Calcula proporção para preencher a página mantendo aspecto
+    const imgRatio = canvas.width / canvas.height;
+    const pageRatio = pdfWidth / pdfHeight;
+    let renderW, renderH;
+    if (imgRatio > pageRatio) {
+      renderW = pdfWidth - 10;
+      renderH = renderW / imgRatio;
+    } else {
+      renderH = pdfHeight - 10;
+      renderW = renderH * imgRatio;
+    }
+    const x = (pdfWidth - renderW) / 2;
+    const y = (pdfHeight - renderH) / 2;
+    pdf.addImage(imgData, 'JPEG', x, y, renderW, renderH);
+
+    // 5) Salva
+    const nomeArquivo = `RNC_${val('numeroRnc') || 'sem-numero'}.pdf`;
+    pdf.save(nomeArquivo);
+    mostrarToast('PDF gerado com sucesso!');
+  } catch (err) {
+    console.error(err);
+    mostrarToast('Erro ao gerar o PDF. Verifique o console.', 'erro');
+  }
+}
+
+// Define data de hoje como padrão no campo "data" do responsável
+window.addEventListener('DOMContentLoaded', () => {
+  const hoje = new Date().toISOString().split('T')[0];
+  document.getElementById('dataResp').value = hoje;
+});
+</script>
+
+</body>
+</html>
