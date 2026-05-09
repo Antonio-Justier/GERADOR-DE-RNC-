@@ -279,7 +279,6 @@
     object-fit: contain;
   }
   #pdf-template .desc-area {
-    height: 110px;
     vertical-align: top;
     padding: 8px;
   }
@@ -428,86 +427,102 @@
 <!-- ============================================ -->
 <div id="pdf-template">
   <table>
-    <!-- Linha 1: logo, número, descrição (cabeçalho) -->
+    <!-- Define larguras fixas das 4 colunas -->
+    <colgroup>
+      <col style="width: 22%">
+      <col style="width: 28%">
+      <col style="width: 25%">
+      <col style="width: 25%">
+    </colgroup>
+
+    <!-- Linha de cabeçalho: logo + número da RNC + descrição (header) -->
     <tr>
-      <td class="logo-cell" rowspan="2">
+      <td class="logo-cell">
         <div class="logo-text">EL DOURADO</div>
         <div class="logo-sub">by Sapore</div>
       </td>
-      <td class="rnc-number" colspan="2">Nº DA RNC: <span id="p-numero"></span></td>
-      <td class="header-cell">DESCRIÇÃO DA OCORRÊNCIA:</td>
+      <td class="rnc-number">Nº DA RNC: <span id="p-numero"></span></td>
+      <td class="header-cell" colspan="2">DESCRIÇÃO DA OCORRÊNCIA:</td>
     </tr>
-    <!-- A partir daqui: campos da esquerda + descrição (rowspan na direita) -->
+
+    <!-- Campos da esquerda + área da descrição (mesclada verticalmente) -->
     <tr>
       <td class="label-cell">Setor solicitante:</td>
-      <td colspan="2"><span id="p-setor"></span></td>
-      <td class="desc-area" rowspan="5"><span id="p-descricao"></span></td>
+      <td><span id="p-setor"></span></td>
+      <td class="desc-area" colspan="2" rowspan="5"><span id="p-descricao"></span></td>
     </tr>
     <tr>
       <td class="label-cell">Produto:</td>
-      <td colspan="3"><span id="p-produto"></span></td>
+      <td><span id="p-produto"></span></td>
     </tr>
     <tr>
       <td class="label-cell">Marca:</td>
-      <td colspan="3"><span id="p-marca"></span></td>
+      <td><span id="p-marca"></span></td>
     </tr>
     <tr>
       <td class="label-cell">Data de fabricação:</td>
-      <td colspan="3"><span id="p-dataFab"></span></td>
+      <td><span id="p-dataFab"></span></td>
     </tr>
     <tr>
       <td class="label-cell">Data de validade:</td>
-      <td colspan="3"><span id="p-dataVal"></span></td>
+      <td><span id="p-dataVal"></span></td>
     </tr>
+
+    <!-- Causa da não conformidade (header) na linha de Quantidade -->
     <tr>
       <td class="label-cell">Quantidade:</td>
-      <td colspan="3"><span id="p-quantidade"></span></td>
-      <td class="header-cell">CAUSA DA NÃO CONFORMIDADE</td>
+      <td><span id="p-quantidade"></span></td>
+      <td class="header-cell" colspan="2">CAUSA DA NÃO CONFORMIDADE</td>
     </tr>
+    <!-- Campos restantes + área da causa (mesclada verticalmente) -->
     <tr>
       <td class="label-cell">Lote:</td>
-      <td colspan="3"><span id="p-lote"></span></td>
-      <td class="desc-area" rowspan="4"><span id="p-causa"></span></td>
+      <td><span id="p-lote"></span></td>
+      <td class="desc-area" colspan="2" rowspan="4"><span id="p-causa"></span></td>
     </tr>
     <tr>
       <td class="label-cell">NF:</td>
-      <td colspan="3"><span id="p-nf"></span></td>
+      <td><span id="p-nf"></span></td>
     </tr>
     <tr>
       <td class="label-cell">Fornecedor:</td>
-      <td colspan="3"><span id="p-fornecedor"></span></td>
+      <td><span id="p-fornecedor"></span></td>
     </tr>
     <tr>
       <td class="label-cell">Risco ao consumidor:</td>
-      <td colspan="3"><span id="p-risco"></span></td>
+      <td><span id="p-risco"></span></td>
     </tr>
+
     <!-- Anexos -->
     <tr>
-      <td class="header-cell" colspan="5">ANEXOS:</td>
+      <td class="header-cell" colspan="4">ANEXOS:</td>
     </tr>
     <tr>
       <td class="image-cell" colspan="2"><img id="p-img1" alt=""></td>
-      <td class="image-cell" colspan="3"><img id="p-img2" alt=""></td>
+      <td class="image-cell" colspan="2"><img id="p-img2" alt=""></td>
     </tr>
-    <!-- Responsável e ação -->
+
+    <!-- Responsável + Ação corretiva (header) -->
     <tr>
       <td class="label-cell">Responsável:</td>
-      <td colspan="2"><span id="p-responsavel"></span></td>
-      <td class="header-cell">AÇÃO Corretiva</td>
+      <td><span id="p-responsavel"></span></td>
+      <td class="header-cell" colspan="2">AÇÃO Corretiva</td>
     </tr>
+    <!-- Data + área da ação corretiva (mesclada verticalmente) -->
     <tr>
       <td class="label-cell">Data:</td>
-      <td colspan="2"><span id="p-dataResp"></span></td>
-      <td class="desc-area" rowspan="2"><span id="p-acao"></span></td>
+      <td><span id="p-dataResp"></span></td>
+      <td class="desc-area" colspan="2" rowspan="2"><span id="p-acao"></span></td>
     </tr>
     <tr>
       <td class="label-cell">Prazo de correção:</td>
-      <td colspan="2"><span id="p-prazo"></span></td>
+      <td><span id="p-prazo"></span></td>
     </tr>
+
     <!-- Rodapé -->
     <tr>
-      <td class="footer-cell" colspan="5">
-        Desenvolvido por: Cesar Augusto . &nbsp;&nbsp;&nbsp; Aprovado por: Jerlandia
+      <td class="footer-cell" colspan="4">
+        Layout desenvolvido por Cesar Augusto &nbsp;&nbsp;&nbsp;&nbsp; Projeto desenvolvido por Antonio
       </td>
     </tr>
   </table>
